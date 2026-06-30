@@ -1,0 +1,33 @@
+# Sekrety i środowisko lokalne
+.env
+public/.env
+
+# Baza i dane produkcyjne
+*.sql.gz
+sprutexbaza.sql
+serwer*.sql
+*_dev-*.sql
+batches/
+Jacekfaktury*.xls
+Jacekfaktury*.xlsx
+
+# Uploady i logi
+public/uploads/**
+!public/uploads/.gitkeep
+public/storage/logs/**
+!public/storage/logs/.gitkeep
+
+# Śmieci i narzędzia deweloperskie
+.DS_Store
+.cursor/
+zbedne/
+*.log
+
+# Pliki tymczasowe / testowe z produkcji
+public/test-*.php
+public/debug-*.php
+public/init-admin.php
+*backup*.php
+crontab.production.txt
+**/sess_*
+public/projekty/sess_*

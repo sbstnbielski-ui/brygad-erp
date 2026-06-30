@@ -1,0 +1,1 @@
+<?php header('Location: hr/workers/create.php'); exit; ?>

@@ -1,0 +1,1 @@
+<?php header('Location: hr/worklog/index.php'); exit; ?>

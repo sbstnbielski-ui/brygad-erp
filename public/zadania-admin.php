@@ -1,0 +1,1 @@
+<?php header('Location: zadania/admin.php'); exit; ?>

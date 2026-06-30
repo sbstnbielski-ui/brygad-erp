@@ -1,0 +1,1 @@
+<?php header('Location: projekty/index.php'); exit; ?>

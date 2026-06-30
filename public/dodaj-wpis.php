@@ -1,0 +1,1 @@
+<?php header('Location: hr/worklog/create.php'); exit; ?>

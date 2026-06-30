@@ -1,0 +1,14 @@
+# SPRUTEX ERP - Konfiguracja Apache
+DirectoryIndex index.php
+
+# Blokuj dostęp do plików wrażliwych
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Włącz kompresję
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+

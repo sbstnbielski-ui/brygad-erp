@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIR GUS API - Diagnostyka</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .status-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .status-loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .diagnostic-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .diagnostic-item:last-child {
+            border-bottom: none;
+        }
+        .diagnostic-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .diagnostic-value {
+            color: #666;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .diagnostic-value.ok {
+            color: #28a745;
+        }
+        .diagnostic-value.error {
+            color: #dc3545;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 30px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 BIR GUS API - Diagnostyka</h1>
+        <p class="subtitle">Test połączenia z Głównym Urzędem Statystycznym - API REGON</p>
+        
+        <div id="statusBox" class="status-box status-loading">
+            Ładowanie diagnostyki...
+        </div>
+        
+        <button class="btn" onclick="runDiagnostics()" id="testBtn">
+            🔄 Uruchom test ponownie
+        </button>
+        
+        <div class="section-title">Wyniki diagnostyki</div>
+        <div id="diagnosticsResults"></div>
+        
+        <div class="section-title">Żądanie SOAP (Request)</div>
+        <pre id="soapRequest">Oczekiwanie na wyniki...</pre>
+        
+        <div class="section-title">Odpowiedź SOAP (Response)</div>
+        <pre id="soapResponse">Oczekiwanie na wyniki...</pre>
+        
+        <div class="section-title" id="extractedXmlTitle" style="display: none;">Wyekstraktowany XML (z multipart)</div>
+        <pre id="extractedXml" style="display: none;">Oczekiwanie na wyniki...</pre>
+        
+        <div class="section-title">Szczegóły (JSON)</div>
+        <pre id="rawJson">Oczekiwanie na wyniki...</pre>
+    </div>
+    
+    <script>
+        async function runDiagnostics() {
+            const statusBox = document.getElementById('statusBox');
+            const resultsDiv = document.getElementById('diagnosticsResults');
+            const rawJson = document.getElementById('rawJson');
+            const soapRequest = document.getElementById('soapRequest');
+            const soapResponse = document.getElementById('soapResponse');
+            const extractedXml = document.getElementById('extractedXml');
+            const extractedXmlTitle = document.getElementById('extractedXmlTitle');
+            const testBtn = document.getElementById('testBtn');
+            
+            statusBox.className = 'status-box status-loading';
+            statusBox.textContent = 'Uruchamianie testów...';
+            testBtn.disabled = true;
+            resultsDiv.innerHTML = '';
+            rawJson.textContent = 'Oczekiwanie na wyniki...';
+            soapRequest.textContent = 'Oczekiwanie na wyniki...';
+            soapResponse.textContent = 'Oczekiwanie na wyniki...';
+            extractedXml.style.display = 'none';
+            extractedXmlTitle.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/bir/test.php');
+                const result = await response.json();
+                
+                if (result.success && result.diagnostics) {
+                    const diag = result.diagnostics;
+                    
+                    // Update status box
+                    if (diag.overall_status === 'OK') {
+                        statusBox.className = 'status-box status-ok';
+                        statusBox.textContent = '✓ Wszystkie testy przeszły pomyślnie! API BIR jest gotowe do użycia.';
+                    } else {
+                        statusBox.className = 'status-box status-error';
+                        statusBox.textContent = '✗ Wykryto problemy z konfiguracją. Sprawdź szczegóły poniżej.';
+                    }
+                    
+                    // Display diagnostics
+                    let html = '';
+                    
+                    html += createDiagItem('Rozszerzenie PHP cURL', 
+                        diag.curl_extension ? '✓ Zainstalowane' : '✗ Brak',
+                        diag.curl_extension);
+                    
+                    if (diag.curl_version !== 'N/A') {
+                        html += createDiagItem('Wersja cURL', diag.curl_version, true);
+                    }
+                    
+                    html += createDiagItem('OpenSSL', 
+                        diag.openssl_extension ? '✓ Zainstalowane' : '✗ Brak',
+                        diag.openssl_extension);
+                    
+                    html += createDiagItem('Wersja PHP', diag.php_version, true);
+                    
+                    html += createDiagItem('allow_url_fopen', 
+                        diag.allow_url_fopen ? '✓ Włączone' : '✗ Wyłączone',
+                        diag.allow_url_fopen);
+                    
+                    html += createDiagItem('Dostęp do WSDL', 
+                        diag.wsdl_accessible ? '✓ Dostępny' : '✗ Niedostępny',
+                        diag.wsdl_accessible);
+                    
+                    if (diag.wsdl_error) {
+                        html += createDiagItem('Błąd WSDL', diag.wsdl_error, false);
+                    }
+                    
+                    html += createDiagItem('Test połączenia cURL', 
+                        diag.curl_test === 'success' ? '✓ Sukces' : '✗ Błąd',
+                        diag.curl_test === 'success');
+                    
+                    if (diag.curl_error) {
+                        html += createDiagItem('Błąd cURL', diag.curl_error, false);
+                    }
+                    
+                    if (diag.http_code) {
+                        html += createDiagItem('Kod HTTP', diag.http_code, diag.http_code === 200);
+                    }
+                    
+                    if (diag.api_key_used) {
+                        html += createDiagItem('Klucz API', diag.api_key_used, true);
+                    }
+                    
+                    if (diag.login_test) {
+                        html += createDiagItem('Test logowania', 
+                            diag.login_test === 'success' ? '✓ Sukces' : '✗ ' + diag.login_test,
+                            diag.login_test === 'success');
+                    }
+                    
+                    if (diag.session_id) {
+                        html += createDiagItem('ID sesji', diag.session_id, true);
+                    }
+                    
+                    if (diag.login_error) {
+                        html += createDiagItem('Błąd logowania', diag.login_error, false);
+                    }
+                    
+                    if (diag.login_fault_code) {
+                        html += createDiagItem('Kod błędu SOAP', diag.login_fault_code, false);
+                    }
+                    
+                    if (diag.multipart_detected) {
+                        html += createDiagItem('Format odpowiedzi', 'MTOM/Multipart (automatycznie przetwarzany)', true);
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                    
+                    // Display SOAP request/response if available
+                    if (diag.soap_request) {
+                        soapRequest.textContent = diag.soap_request;
+                    } else {
+                        soapRequest.textContent = 'Brak danych żądania SOAP';
+                    }
+                    
+                    if (diag.soap_response) {
+                        soapResponse.textContent = diag.soap_response;
+                    } else {
+                        soapResponse.textContent = 'Brak danych odpowiedzi SOAP';
+                    }
+                    
+                    // Display extracted XML if multipart was detected
+                    if (diag.extracted_xml) {
+                        extractedXml.textContent = diag.extracted_xml;
+                        extractedXml.style.display = 'block';
+                        extractedXmlTitle.style.display = 'block';
+                    } else {
+                        extractedXml.style.display = 'none';
+                        extractedXmlTitle.style.display = 'none';
+                    }
+                    
+                    // Remove SOAP details from JSON display to avoid duplication
+                    const jsonCopy = {...result};
+                    if (jsonCopy.diagnostics) {
+                        delete jsonCopy.diagnostics.soap_request;
+                        delete jsonCopy.diagnostics.soap_response;
+                        delete jsonCopy.diagnostics.soap_request_headers;
+                        delete jsonCopy.diagnostics.soap_response_headers;
+                        delete jsonCopy.diagnostics.extracted_xml;
+                    }
+                    rawJson.textContent = JSON.stringify(jsonCopy, null, 2);
+                } else {
+                    statusBox.className = 'status-box status-error';
+                    statusBox.textContent = '✗ Błąd: ' + (result.error || 'Nieznany błąd');
+                    rawJson.textContent = JSON.stringify(result, null, 2);
+                    soapRequest.textContent = 'Brak danych';
+                    soapResponse.textContent = 'Brak danych';
+                }
+            } catch (error) {
+                statusBox.className = 'status-box status-error';
+                statusBox.textContent = '✗ Błąd połączenia: ' + error.message;
+                rawJson.textContent = 'ERROR: ' + error.message;
+                soapRequest.textContent = 'Błąd: ' + error.message;
+                soapResponse.textContent = 'Błąd: ' + error.message;
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+        
+        function createDiagItem(label, value, isOk) {
+            const valueClass = isOk ? 'ok' : (isOk === false ? 'error' : '');
+            return `
+                <div class="diagnostic-item">
+                    <div class="diagnostic-label">${label}</div>
+                    <div class="diagnostic-value ${valueClass}">${value}</div>
+                </div>
+            `;
+        }
+        
+        // Run diagnostics on page load
+        window.addEventListener('DOMContentLoaded', runDiagnostics);
+    </script>
+</body>
+</html>
+

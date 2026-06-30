@@ -1,0 +1,1 @@
+<?php header('Location: zadania/create.php'); exit; ?>

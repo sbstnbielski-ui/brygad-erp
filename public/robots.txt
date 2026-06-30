@@ -1,0 +1,37 @@
+# SPRUTEX ERP - Blokada indeksowania przez wyszukiwarki
+# System wewnętrzny - NIE indeksuj żadnych stron
+
+User-agent: *
+Disallow: /
+
+# Blokada dla wszystkich głównych wyszukiwarek
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Googlebot-Image
+Disallow: /
+
+User-agent: Googlebot-Mobile
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+User-agent: Slurp
+Disallow: /
+
+User-agent: DuckDuckBot
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
+
+User-agent: archive.org_bot
+Disallow: /
+
+User-agent: ia_archiver
+Disallow: /
+

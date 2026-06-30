@@ -1,0 +1,1 @@
+<?php header('Location: finanse/wydatki/index.php'); exit; ?>
